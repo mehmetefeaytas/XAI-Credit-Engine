@@ -48,16 +48,27 @@ class DatasetService:
         dataset = service.to_tree_dataset(records)
     """
 
-    # Bölge/isim havuzu (Faker yerine basit liste)
+    # Bölge/isim havuzu (Daha gerçekçi ve geniş liste)
     _FIRST_NAMES = [
-        "Ahmet", "Mehmet", "Ali", "Ayşe", "Fatma", "Zeynep", "Mustafa",
-        "Hasan", "Hüseyin", "Elif", "Emine", "Hatice", "Ömer", "İbrahim",
-        "Yusuf", "Musa", "İsa", "Davut", "Süleyman", "Yunus", "Büşra", "Selin"
+        "Ahmet", "Mehmet", "Ali", "Ayşe", "Fatma", "Zeynep", "Mustafa", "Hasan", "Hüseyin", "Elif",
+        "Emine", "Hatice", "Ömer", "İbrahim", "Yusuf", "Musa", "İsa", "Davut", "Süleyman", "Yunus",
+        "Büşra", "Selin", "Murat", "Hakan", "Serkan", "Volkan", "Cem", "Can", "Burak", "Emre",
+        "Onur", "Mert", "Ozan", "Kerem", "Kaan", "Umut", "Uğur", "Gökhan", "Eren", "Bora",
+        "Cenk", "Deniz", "Ege", "Yalçın", "Oğuz", "Cihan", "Sinan", "Tolga", "Barış", "Selim",
+        "Kenan", "Mahmut", "Orhan", "Kemal", "Yavuz", "Turan", "Nihat", "Osman", "Cevdet", "Şevket",
+        "Fatih", "Serdar", "Ercan", "Rıza", "Talat", "Fuat", "Suat", "Zafer", "İlhan", "Aslı",
+        "Cansu", "Ceren", "Burcu", "Gizem", "Gözde", "Pelin", "Selinay", "Damla", "Duygu", "Berna",
+        "Eda", "Seda", "Simge", "Ezgi", "Özge", "Cemre", "Melis", "Merve", "Banu", "Tuğba",
+        "Kübra", "Esra", "Bahar", "Melek", "Gül"
     ]
     _LAST_NAMES = [
-        "Yılmaz", "Kaya", "Demir", "Çelik", "Şahin", "Doğan", "Kılıç",
-        "Arslan", "Taş", "Aydın", "Özdemir", "Arslan", "Yıldırım",
-        "Erdoğan", "Kurt", "Özkan", "Çetin", "Akar", "Güneş", "Aslan"
+        "Yılmaz", "Kaya", "Demir", "Çelik", "Şahin", "Doğan", "Kılıç", "Arslan", "Taş", "Aydın",
+        "Özdemir", "Yıldırım", "Erdoğan", "Kurt", "Özkan", "Çetin", "Akar", "Güneş", "Aslan", "Koç",
+        "Bozkurt", "Avcı", "Gül", "Öztürk", "Aksoy", "Yıldız", "Polat", "Can", "Karaman", "Şen",
+        "Akyüz", "Er", "Tekin", "Uysal", "Cengiz", "Turan", "Yavuz", "Karaca", "Sarı", "Ergin",
+        "Yaman", "Bulut", "Korkmaz", "Gök", "Güler", "Türk", "Köse", "Altay", "Sönmez", "Öz",
+        "Özer", "Kaplan", "Erol", "Çoban", "Sayın", "Özçelik", "Büyük", "Akgün", "Güney", "Erdem",
+        "Şimşek", "Yalçın", "Çalışkan", "Ataş", "Aktaş", "Coşkun", "Karakaya", "Ersoy", "Başar", "Dinç"
     ]
 
     def __init__(self, seed: int | None = 42):

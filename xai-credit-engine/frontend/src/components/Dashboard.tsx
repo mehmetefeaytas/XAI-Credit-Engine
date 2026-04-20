@@ -64,7 +64,7 @@ export default function Dashboard() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          count: 500,
+          count: 5000,
           approval_ratio: 0.55,
           seed: Math.floor(Math.random() * 1000),
         }),
