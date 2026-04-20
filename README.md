@@ -15,31 +15,32 @@
 Projenin sıfırdan nasıl ayağa kalktığını, binlerce veriyi nasıl anlık işlediğini ve XAI (Açıklanabilir Yapay Zeka) raporlarını mahkemeye sunulabilecek şeffaflıkta nasıl gösterdiğini aşağıdaki videodan izleyebilirsiniz:
 
 <video width="100%" controls>
-  <source src="assets/demo_video.mp4" type="video/mp4">
-  Tarayıcınız MP4 videosunu desteklemiyor. Video dosyasını "assets/demo_video.mp4" üzerinden indirebilirsiniz.
+  <source src="xai-credit-engine/assets/demo_video.mp4" type="video/mp4">
+  Tarayıcınız MP4 videosunu desteklemiyor. Video dosyasını "xai-credit-engine/assets/demo_video.mp4" üzerinden indirebilirsiniz.
 </video>
 
 ### 1️⃣ Veri Üretimi ve Sistem Panosu
 
 Banka senaryosuna uygun, sınıflandırılması yüksek çeşitlilikte sentetik başvuru havuzu:
-![Dashboard ve Veri Seti](assets/dashboard.png)
+![Dashboard ve Veri Seti](
+xai-credit-engine/assets/dashboard.png)
 
 ### 2️⃣ Karar Ağacı Motoru (Engine)
 
 ID3 algoritması ve Shannon Entropisi baz alınarak 5.000 veri satırından milisaniyeler içerisinde çizilen karar kuralı grafik zinciri:
-![Ağaç Görselleştirme 1](assets/tree_visualization.png)
+![Ağaç Görselleştirme 1](xai-credit-engine/assets/tree_visualization.png)
 _(Tam Graf Akışı ve Düğümler)_
-![Ağaç Görselleştirme 2](assets/decision_tree.png)
+![Ağaç Görselleştirme 2](xai-credit-engine/assets/decision_tree.png)
 
 ### 3️⃣ Kredi Çıkarımı (Inference) ve Başvuru Formu
 
 Canlı başvuru ekranında uçtan uca kredi değerlendirmesi. ML modeli saniyeler içerisinde 31 risk faktörünü hesaplıyor:
-![Kredi Başvurusu Formu](assets/inference_form.png)
+![Kredi Başvurusu Formu](xai-credit-engine/assets/inference_form.png)
 
 ### 4️⃣ GDPR Uyumlu XAI (Explainable AI) Doğal Dil Raporu
 
 Bir müşteri onaylandığında veya reddedildiğinde sunulan, veritabanına `Audit Log` olarak blok blok kazınan kanıt niteliğindeki açıklama ve kesin Boolean matrisleri:
-![XAI Açıklama Raporu](assets/xai_explanation.png)
+![XAI Açıklama Raporu](xai-credit-engine/assets/xai_explanation.png)
 
 ---
 
