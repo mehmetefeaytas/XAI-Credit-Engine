@@ -1,74 +1,60 @@
 """
 app/api/v1/explanation.py
 ──────────────────────────────────────────────────────────────────────────────
-XAI Açıklama endpoint'i.
-
-GET /api/v1/explanation/{inference_id}   → Boolean formülü + NL rapor
-
-İş akışı:
-    1. inference_id ile log'da ilgili kaydı bul
-    2. ExplanationGenerator.generate() çalıştır
-    3. Açıklamayı log'a kaydet (explanation log)
-    4. ExplanationResponse döner
+XAI Açıklama endpoint'i (SQLAlchemy Destekli).
 """
 
 import uuid
-from datetime import datetime, timezone
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
 
+from app.data.database import get_db
+from app.data.models.log_model import InferenceLogModel, ExplanationLogModel
 from app.engine.xai.explanation_generator import ExplanationGenerator
 from app.engine.inference.inference_engine import InferenceStep
 from app.schemas.explanation_schema import ExplanationResponse
-from app.api.v1.inference import get_inference_log
 
 router = APIRouter()
-
-# ── In-Memory Explanation Log ─────────────────────────────────────────────────
-_explanation_log: list[dict] = {}  # {inference_id: explanation_dict}
-
 generator = ExplanationGenerator()
 
-
-# ── GET /explanation/{inference_id} ──────────────────────────────────────────
-@router.get("/{inference_id}", response_model=ExplanationResponse,
-            summary="XAI açıklama raporu")
-async def get_explanation(inference_id: str, language: str = "tr"):
+@router.get("/{inference_id}", response_model=ExplanationResponse, summary="XAI açıklama raporu")
+async def get_explanation(inference_id: str, language: str = "tr", db: AsyncSession = Depends(get_db)):
     """
     Belirli bir çıkarım için XAI açıklama raporu döner.
-
-    **Dönen değer:**
-    - `boolean_formula`: Boolean AND zinciri (teknik)
-    - `dnf_formula`: DNF format (akademik)
-    - `natural_language`: Türkçe doğal dil raporu (GDPR uyumu)
-    - `technical_log`: Adım adım audit logu
-
-    **Hata:**
-    - `404`: inference_id bulunamadı
+    Eğer ExplanationLogModel'de zaten varsa veritabanından getir.
+    Yoksa InferenceLogModel'den oku, üret ve DB'ye cache'le.
     """
-    global _explanation_log
+    
+    # 1. Önce DB'de cache var mı bak
+    res_exp = await db.execute(select(ExplanationLogModel).where(ExplanationLogModel.inference_id == inference_id))
+    existing_exp = res_exp.scalars().first()
+    
+    if existing_exp and existing_exp.language_code == language:
+        return ExplanationResponse(
+            explanation_id=existing_exp.id,
+            inference_id=existing_exp.inference_id,
+            decision=existing_exp.decision,
+            boolean_formula=existing_exp.boolean_formula,
+            dnf_formula=existing_exp.dnf_formula,
+            natural_language=existing_exp.natural_language,
+            technical_log=existing_exp.technical_log,
+            language_code=existing_exp.language_code,
+            generated_at=existing_exp.generated_at.isoformat()
+        )
 
-    # Önce cache'de ara
-    if inference_id in _explanation_log:
-        return ExplanationResponse(**_explanation_log[inference_id])
-
-    # Inference log'unda ara
-    inference_logs = get_inference_log()
-    log_entry = next(
-        (e for e in inference_logs if e["inference_id"] == inference_id),
-        None,
-    )
+    # 2. Inference log'unda ara
+    res_inf = await db.execute(select(InferenceLogModel).where(InferenceLogModel.id == inference_id))
+    log_entry = res_inf.scalars().first()
 
     if not log_entry:
         raise HTTPException(
             status_code=404,
-            detail={
-                "code":    "INFERENCE_NOT_FOUND",
-                "message": f"inference_id '{inference_id}' bulunamadı.",
-            },
+            detail={"code": "INFERENCE_NOT_FOUND", "message": f"inference_id '{inference_id}' bulunamadı."}
         )
 
-    # Path'i InferenceStep listesine çevir
+    # 3. Path'i InferenceStep listesine çevir
     path_steps = [
         InferenceStep(
             node_id=step["node_id"],
@@ -79,37 +65,41 @@ async def get_explanation(inference_id: str, language: str = "tr"):
             branch_taken=step["branch_taken"],
             depth=step["depth"],
         )
-        for step in log_entry["path"]
+        for step in log_entry.path
     ]
 
-    # Açıklama üret
+    # 4. Açıklama üret
     output = generator.generate(
         path=path_steps,
-        decision=log_entry["decision"],
+        decision=log_entry.decision,
         language=language,
     )
 
+    # 5. Yeni açıklamayı DB'ye kaydet
     explanation_id = str(uuid.uuid4())
-    generated_at   = datetime.now(timezone.utc).isoformat()
+    
+    db_exp = ExplanationLogModel(
+        id=explanation_id,
+        inference_id=inference_id,
+        decision=log_entry.decision,
+        boolean_formula=output.boolean_formula,
+        dnf_formula=output.dnf_formula,
+        natural_language=output.natural_language,
+        technical_log=output.technical_log,
+        language_code=language
+    )
+    db.add(db_exp)
+    await db.commit()
+    await db.refresh(db_exp)
 
-    result = {
-        "explanation_id":   explanation_id,
-        "inference_id":     inference_id,
-        "decision":         log_entry["decision"],
-        "boolean_formula":  output.boolean_formula,
-        "dnf_formula":      output.dnf_formula,
-        "natural_language": output.natural_language,
-        "technical_log":    output.technical_log,
-        "language_code":    language,
-        "generated_at":     generated_at,
-    }
-
-    # Cache'e kaydet (aynı inference için tekrar üretme)
-    _explanation_log[inference_id] = result
-
-    return ExplanationResponse(**result)
-
-
-def get_explanation_log() -> list[dict]:
-    """Explanation log'una dışarıdan erişim (logs endpoint için)."""
-    return list(_explanation_log.values())
+    return ExplanationResponse(
+        explanation_id=db_exp.id,
+        inference_id=db_exp.inference_id,
+        decision=db_exp.decision,
+        boolean_formula=db_exp.boolean_formula,
+        dnf_formula=db_exp.dnf_formula,
+        natural_language=db_exp.natural_language,
+        technical_log=db_exp.technical_log,
+        language_code=db_exp.language_code,
+        generated_at=db_exp.generated_at.isoformat()
+    )

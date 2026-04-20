@@ -1,58 +1,53 @@
 """
 app/api/v1/logs.py
 ──────────────────────────────────────────────────────────────────────────────
-Audit log listeleme endpoint'leri.
-
-GET /api/v1/logs   → Tüm logları listele (tip filtresi + sayfalama)
-
-Log tipleri: "inference" | "explanation" | "build"
+Audit log listeleme endpoint'leri (SQLAlchemy Destekli).
 """
 
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Query, Depends
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
 
-from app.api.v1.inference import get_inference_log
-from app.api.v1.explanation import get_explanation_log
+from app.data.database import get_db
+from app.data.models.log_model import InferenceLogModel, ExplanationLogModel
 
 router = APIRouter()
-
 
 @router.get("", summary="Audit log kayıtlarını listele")
 async def list_logs(
     type:  str | None = Query(default=None, description="inference | explanation"),
     page:  int        = Query(default=1, ge=1),
     size:  int        = Query(default=50, ge=1, le=200),
+    db: AsyncSession = Depends(get_db)
 ):
-    """
-    Tüm işlem loglarını döner.
+    all_logs = []
 
-    - **type**: `inference` veya `explanation` filtresi
-    - **page**: Sayfa numarası
-    - **size**: Sayfa başına kayıt
-    """
-    all_logs: list[dict] = []
-
+    # Inference Loglari
     if type is None or type == "inference":
-        for entry in get_inference_log():
+        res = await db.execute(select(InferenceLogModel).order_by(InferenceLogModel.created_at.desc()).limit(100))
+        for inf in res.scalars():
             all_logs.append({
                 "type":       "inference",
-                "id":         entry["inference_id"],
-                "decision":   entry["decision"],
-                "confidence": entry["confidence"],
-                "created_at": entry["created_at"],
-                "customer":   entry.get("customer_name", ""),
+                "id":         inf.id,
+                "decision":   inf.decision,
+                "confidence": inf.confidence,
+                "created_at": inf.created_at.isoformat() if inf.created_at else "",
+                "customer":   inf.customer_name or "",
             })
 
+    # Explanation Loglari
     if type is None or type == "explanation":
-        for entry in get_explanation_log():
+        res = await db.execute(select(ExplanationLogModel).order_by(ExplanationLogModel.generated_at.desc()).limit(100))
+        for exp in res.scalars():
             all_logs.append({
                 "type":           "explanation",
-                "id":             entry["explanation_id"],
-                "inference_id":   entry["inference_id"],
-                "decision":       entry["decision"],
-                "generated_at":   entry["generated_at"],
+                "id":             exp.id,
+                "inference_id":   exp.inference_id,
+                "decision":       exp.decision,
+                "generated_at":   exp.generated_at.isoformat() if exp.generated_at else "",
             })
 
-    # Zamana göre sırala (yeniden eskiye)
+    # Ortak zamana göre sırala
     all_logs.sort(key=lambda x: x.get("created_at") or x.get("generated_at", ""), reverse=True)
 
     total  = len(all_logs)
