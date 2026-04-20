@@ -146,4 +146,14 @@ npm run dev
 
 ---
 
+## TEKNİK BORÇ NOTLARI
+
+Feature eşikleri şu an statik; v2'de optimal threshold arama (sorted split) eklenebilir
+Confidence hesabı basit majority fraction; v2'de Laplace smoothing uygulanabilir
+NL rapor şablonu sabit; v2'de LLM entegrasyonu ile dinamik açıklama üretilebilir
+Pruning bonus özellik olarak işaretlenmiş; erken eklenirse aşırı uyum riski azalır
+WebSocket desteği AuditLog'da opsiyonel; ilk versiyonda polling yeterli
+
+---
+
 > Bu proje, Modern Web Framework'leri ile Matematik & Bilgisayar Bilimleri Temellerinin (Discrete Math, Graph Theory) harmonik bir uygulamasıdır. Katkı (PR) taleplerinden memnuniyet duyarız!
