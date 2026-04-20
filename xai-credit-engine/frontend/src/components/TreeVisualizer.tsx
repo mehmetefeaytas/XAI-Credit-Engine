@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback, useMemo } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import {
   ReactFlow,
   MiniMap,
@@ -11,6 +11,7 @@ import {
   Position,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
+import dagre from "dagre";
 import { API_BASE } from "../App";
 
 // Custom Nodes
@@ -19,15 +20,15 @@ const DecisionNode = ({ data }: any) => {
     <div className="react-flow__node-decision">
       <Handle type="target" position={Position.Top} />
       <div
-        style={{ fontWeight: "bold", fontSize: "14px", marginBottom: "4px" }}
+        style={{ fontWeight: "bold", fontSize: "13px", marginBottom: "4px" }}
       >
-        {data.feature}
+        {data.feature_name} {data.operator} {data.threshold}
       </div>
       <div style={{ fontSize: "10px", color: "rgba(255,255,255,0.7)" }}>
-        Entropi: {data.entropy.toFixed(3)}
+        Entropi: {data.entropy?.toFixed(3)}
       </div>
       <div style={{ fontSize: "10px", color: "rgba(255,255,255,0.7)" }}>
-        Örnek: {data.samples}
+        Örnek: {data.sample_count}
       </div>
       <Handle type="source" position={Position.Bottom} />
     </div>
@@ -36,11 +37,11 @@ const DecisionNode = ({ data }: any) => {
 
 const LeafNode = ({ data }: any) => {
   return (
-    <div className={`react-flow__node-leaf ${data.label?.toLowerCase()}`}>
+    <div className={`react-flow__node-leaf ${data.leaf_label?.toLowerCase()}`}>
       <Handle type="target" position={Position.Top} />
-      <div>{data.label}</div>
+      <div>{data.leaf_label}</div>
       <div style={{ fontSize: "10px", marginTop: "4px", opacity: 0.8 }}>
-        Örnek: {data.samples}
+        Örnek: {data.sample_count}
       </div>
     </div>
   );
@@ -51,17 +52,54 @@ const nodeTypes = {
   leaf: LeafNode,
 };
 
+const layoutElements = (nodes: any[], edges: any[], direction = "TB") => {
+  const dagreGraph = new dagre.graphlib.Graph();
+  dagreGraph.setDefaultEdgeLabel(() => ({}));
+  dagreGraph.setGraph({
+    rankdir: direction,
+    align: "UL",
+    nodesep: 60,
+    edgesep: 20,
+    ranksep: 80,
+  });
+
+  nodes.forEach((node) => {
+    dagreGraph.setNode(node.id, { width: 180, height: 80 });
+  });
+
+  edges.forEach((edge) => {
+    dagreGraph.setEdge(edge.source, edge.target);
+  });
+
+  dagre.layout(dagreGraph);
+
+  const newNodes = nodes.map((node) => {
+    const nodeWithPosition = dagreGraph.node(node.id);
+    return {
+      ...node,
+      targetPosition: Position.Top,
+      sourcePosition: Position.Bottom,
+      position: {
+        x: nodeWithPosition.x - 180 / 2,
+        y: nodeWithPosition.y - 80 / 2,
+      },
+    };
+  });
+
+  return { nodes: newNodes, edges };
+};
+
 export default function TreeVisualizer() {
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [importance, setImportance] = useState<any[]>([]);
 
   useEffect(() => {
     const fetchFullTree = async () => {
       try {
-        // 1. Get active tree ID
+        setLoading(true);
+        // 1. Aktif ağacın IDsini al
         const activeRes = await fetch(`${API_BASE}/tree/active`);
         if (!activeRes.ok) {
           setError(
@@ -71,15 +109,52 @@ export default function TreeVisualizer() {
           return;
         }
         const activeData = await activeRes.json();
+        const activeId = activeData.version_id;
 
-        // Bu sürüm için özellik önemini kaydet
-        // Gerçek API'de ağaç inşa tepkisinde dönüyor, bu yüzden basit olsun diye /tree/build cevabında cached veya state lazımdı.
-        // Ama biz ağacın tam yapısını getirmeliyiz. Şimdilik "ağacın tam modeli" API'de /tree/{version_id}
-        // Maalesef ağacın nodes/edges bilgisi GET endpoint'inde eksik olabilir (Adım 2'de metadata dönüyorduk sadece)
-        // Eğer nodes dönmüyorsa, UI'da ağaç çizemeyeceğiz anlamına gelir. Biz geçici olarak tree listesinden root idsini vs okuyamayacağımız için burada hata verebilir.
-        throw new Error(
-          "UI Ağaç çizim API'si henüz backend'de Nodes ve Edges döndürmüyor, bu bölüm için Backend'de GET /tree/{id}/nodes çağrısı gereklidir.",
+        // 2. Tam ağacı Node ve Edge verileriyle çek
+        const treeRes = await fetch(`${API_BASE}/tree/${activeId}`);
+        if (!treeRes.ok) {
+          throw new Error("Ağaç verileri getirilemedi.");
+        }
+
+        const treeData = await treeRes.json();
+
+        // 3. Backend formatını React Flow formatına dönüştür
+        const flowNodes = treeData.nodes.map((n: any) => ({
+          id: n.id,
+          type: n.is_leaf ? "leaf" : "decision",
+          data: { ...n },
+          position: { x: 0, y: 0 }, // Dagre tarafından düzenlenecek
+        }));
+
+        const flowEdges = treeData.edges.map((e: any) => ({
+          id: e.id,
+          source: e.source_node_id,
+          target: e.target_node_id,
+          label: e.branch_value ? "Evet" : "Hayır",
+          type: "smoothstep",
+          animated: true,
+          style: {
+            stroke: e.branch_value ? "#10B981" : "#EF4444",
+            strokeWidth: 2,
+          },
+          labelStyle: { fill: "#333", fontWeight: 700 },
+          labelBgStyle: { fill: "rgba(255, 255, 255, 0.75)" },
+          markerEnd: {
+            type: MarkerType.ArrowClosed,
+            color: e.branch_value ? "#10B981" : "#EF4444",
+          },
+        }));
+
+        // 4. Dagre ile düzenle (Layout)
+        const { nodes: layoutedNodes, edges: layoutedEdges } = layoutElements(
+          flowNodes,
+          flowEdges,
         );
+
+        setNodes(layoutedNodes);
+        setEdges(layoutedEdges);
+        setLoading(false);
       } catch (err: any) {
         setError(err.message || "Bir hata oluştu");
         setLoading(false);
@@ -87,7 +162,7 @@ export default function TreeVisualizer() {
     };
 
     fetchFullTree();
-  }, []);
+  }, [setNodes, setEdges]);
 
   if (loading)
     return (
@@ -102,16 +177,8 @@ export default function TreeVisualizer() {
   if (error)
     return (
       <div className="glass-card" style={{ borderColor: "var(--warning)" }}>
-        <h3 className="text-warning">Görselleştirme Kullanılamıyor</h3>
+        <h3 className="text-warning">Ağaç Görselleştirme</h3>
         <p>{error}</p>
-        <p
-          className="text-muted"
-          style={{ marginTop: "1rem", fontSize: "0.9rem" }}
-        >
-          Not: Backend (Adım 2), tam graf node'larını GET endpoint'inde
-          döndürmeyecek şekilde (sadece metadata) tasarlandı. Graph ağacı çizmek
-          için FastAPI tarafında güncelleme gerekebilir.
-        </p>
       </div>
     );
 
@@ -127,14 +194,16 @@ export default function TreeVisualizer() {
         onEdgesChange={onEdgesChange}
         nodeTypes={nodeTypes}
         fitView
+        attributionPosition="bottom-right"
       >
-        <Background color="#fff" gap={16} />
+        <Background color="#ccc" gap={16} />
         <MiniMap
           nodeColor={(n) => {
             if (n.type === "leaf")
-              return n.data.label === "APPROVED" ? "#10B981" : "#EF4444";
+              return n.data.leaf_label === "APPROVED" ? "#10B981" : "#EF4444";
             return "#4F46E5";
           }}
+          maskColor="rgba(0,0,0,0.2)"
         />
         <Controls />
       </ReactFlow>
