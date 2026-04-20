@@ -14,21 +14,36 @@ import "@xyflow/react/dist/style.css";
 import dagre from "dagre";
 import { API_BASE } from "../App";
 
-// Custom Nodes
+const FEATURE_LABELS: Record<string, string> = {
+  income_gt_50k: "Yıllık Gelir > 50.000 TL",
+  credit_score_gt_700: "Kredi Puanı > 700",
+  has_prior_default: "Geçmiş İcra Kaydı Var",
+  debt_to_income_lt_35: "Borç/Gelir Oranı < %35",
+  employment_employed: "Düzenli / Maaşlı Çalışan",
+  age_gte_25: "Yaş ≥ 25",
+  existing_credits_lt_3: "Aktif Kredi Sayısı < 3",
+};
+
 const DecisionNode = ({ data }: any) => {
+  const label = FEATURE_LABELS[data.feature_name] || data.feature_name;
   return (
     <div className="react-flow__node-decision">
       <Handle type="target" position={Position.Top} />
       <div
-        style={{ fontWeight: "bold", fontSize: "13px", marginBottom: "4px" }}
+        style={{
+          fontWeight: "bold",
+          fontSize: "12px",
+          marginBottom: "4px",
+          padding: "0 4px",
+        }}
       >
-        {data.feature_name} {data.operator} {data.threshold}
+        {label}
       </div>
       <div style={{ fontSize: "10px", color: "rgba(255,255,255,0.7)" }}>
         Entropi: {data.entropy?.toFixed(3)}
       </div>
       <div style={{ fontSize: "10px", color: "rgba(255,255,255,0.7)" }}>
-        Örnek: {data.sample_count}
+        Örnek Sayısı: {data.sample_count}
       </div>
       <Handle type="source" position={Position.Bottom} />
     </div>
