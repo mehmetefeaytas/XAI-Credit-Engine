@@ -1,4 +1,4 @@
-# XAI Credit Engine — FinTech Kredi Onay & XAI Sistemi 🚀
+# XAI Credit Engine — FinTech Kredi Onay & XAI Sistemi 
 
 [![Python](https://img.shields.io/badge/Python-3.11+-blue)](https://python.org)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.110-green)](https://fastapi.tiangolo.com)
