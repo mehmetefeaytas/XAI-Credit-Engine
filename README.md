@@ -14,10 +14,7 @@
 
 Projenin sıfırdan nasıl ayağa kalktığını, binlerce veriyi nasıl anlık işlediğini ve XAI (Açıklanabilir Yapay Zeka) raporlarını mahkemeye sunulabilecek şeffaflıkta nasıl gösterdiğini aşağıdaki videodan izleyebilirsiniz:
 
-<video width="100%" controls>
-  <source src="xai-credit-engine/assets/demo_video.mp4" type="video/mp4">
-  Tarayıcınız MP4 videosunu desteklemiyor. Video dosyasını "xai-credit-engine/assets/demo_video.mp4" üzerinden indirebilirsiniz.
-</video>
+[![XAI Credit Engine Demo](https://img.youtube.com/vi/lLuU4as2SI4/maxresdefault.jpg)](https://youtu.be/lLuU4as2SI4)
 
 ### 1️⃣ Veri Üretimi ve Sistem Panosu
 
