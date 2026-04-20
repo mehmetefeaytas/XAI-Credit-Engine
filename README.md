@@ -148,11 +148,11 @@ npm run dev
 
 ## TEKNİK BORÇ NOTLARI
 
-Feature eşikleri şu an statik; v2'de optimal threshold arama (sorted split) eklenebilir
-Confidence hesabı basit majority fraction; v2'de Laplace smoothing uygulanabilir
-NL rapor şablonu sabit; v2'de LLM entegrasyonu ile dinamik açıklama üretilebilir
-Pruning bonus özellik olarak işaretlenmiş; erken eklenirse aşırı uyum riski azalır
-WebSocket desteği AuditLog'da opsiyonel; ilk versiyonda polling yeterli
+1. Feature eşikleri şu an statik; v2'de optimal threshold arama (sorted split) eklenebilir
+2. Confidence hesabı basit majority fraction; v2'de Laplace smoothing uygulanabilir
+3. NL rapor şablonu sabit; v2'de LLM entegrasyonu ile dinamik açıklama üretilebilir
+4. Pruning bonus özellik olarak işaretlenmiş; erken eklenirse aşırı uyum riski azalır
+5. WebSocket desteği AuditLog'da opsiyonel; ilk versiyonda polling yeterli
 
 ---
 
