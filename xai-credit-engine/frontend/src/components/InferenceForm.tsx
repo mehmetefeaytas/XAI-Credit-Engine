@@ -358,6 +358,27 @@ export default function InferenceForm() {
                   </h4>
                   <pre>{explanation.boolean_formula}</pre>
                 </div>
+
+                <div
+                  style={{
+                    marginTop: "1rem",
+                    padding: "1rem",
+                    background: "rgba(59, 130, 246, 0.1)",
+                    borderLeft: "4px solid #3b82f6",
+                    borderRadius: "4px",
+                    fontSize: "0.85rem",
+                    color: "var(--text-muted)",
+                    lineHeight: "1.4",
+                  }}
+                >
+                  <strong>GDPR Madde 22 Hakkında:</strong> GDPR Madde 22,
+                  bireylerin, yalnızca otomatik işlemeye (yapay zeka, profil
+                  oluşturma vb.) dayalı ve kendisi üzerinde hukuki veya benzeri
+                  önemli etkiler yaratan kararlara tabi tutulmama hakkını
+                  düzenler. Bu madde, insan müdahalesi, görüş bildirme ve
+                  karara itiraz etme haklarını güvence altına alarak,
+                  otomasyonun getirdiği riskleri sınırlar.
+                </div>
               </>
             )}
           </div>
